@@ -1,0 +1,46 @@
+{
+	"hash": "d41d8cd98f00b204e9800998ecf8427e",
+	"updated": "2021-04-22T08:34:16.1155083-03:00",
+	"installedModules": {
+		"github.com/ahausladen/jsondataobjects": {
+			"name": "jsondataobjects",
+			"version": "master",
+			"hash": "1f83b2a3cac07acd89a8614b9e4f30b7",
+			"artifacts": {},
+			"failed": false,
+			"changed": false
+		},
+		"github.com/hashload/horse": {
+			"name": "horse",
+			"version": "2.0.13",
+			"hash": "985da2054d3c705bc211797c653e47ba",
+			"artifacts": {},
+			"failed": false,
+			"changed": false
+		},
+		"github.com/nickolasdeluca/urlparser": {
+			"name": "urlparser",
+			"version": "1.0.6",
+			"hash": "066dbd7f6f70838b15ecfd04c3dc1d72",
+			"artifacts": {},
+			"failed": false,
+			"changed": false
+		},
+		"github.com/viniciussanchez/dataset-serialize": {
+			"name": "dataset-serialize",
+			"version": "v2.3.0",
+			"hash": "916555f057218c63d26c06a3c0bd12f4",
+			"artifacts": {},
+			"failed": false,
+			"changed": false
+		},
+		"github.com/viniciussanchez/restrequest4delphi": {
+			"name": "restrequest4delphi",
+			"version": "v3.0.6",
+			"hash": "c113a36fa794862991b7d85d8a23053a",
+			"artifacts": {},
+			"failed": false,
+			"changed": false
+		}
+	}
+}
