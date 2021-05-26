@@ -7,7 +7,6 @@ uses
   Winapi.Windows, Winapi.Messages, Winapi.ShellApi,
   { System }
   System.SysUtils, System.Variants, System.Classes, System.DateUtils,
-  System.JSON,
   { Vcl }
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
   Vcl.WinXPanels, Vcl.ExtCtrls,
@@ -15,13 +14,11 @@ uses
   RESTRequest4D,
   { UrlParser }
   UrlParser,
-  { XComponents }
-  XEdit, XGroupBox,
   { Horse }
   Horse,
   { JsonDataObjects }
   JsonDataObjects,
-
+  { REST }
   REST.Types;
 
 type
@@ -30,36 +27,36 @@ type
     caIO: TCard;
     bvSeparator: TBevel;
     pncaIOBackground: TPanel;
-    gbEnvio: TXGroupBox;
+    gbEnvio: TGroupBox;
     btSimpleUpload: TButton;
     pnBottom: TPanel;
     btOpenSettings: TButton;
     caOptions: TCard;
     bvBottomLine: TBevel;
     pncaOptionsBackground: TPanel;
-    gbEndpoints: TXGroupBox;
+    gbEndpoints: TGroupBox;
     lbAuthorizationEndpoint: TLabel;
     lbTokenEndpoint: TLabel;
     lbRedirectionEndpoint: TLabel;
-    edAuthorizationEndpoint: TXEdit;
-    edTokenEndpoint: TXEdit;
-    edRedirectionEndpoint: TXEdit;
-    gbCodesTokens: TXGroupBox;
+    edAuthorizationEndpoint: TEdit;
+    edTokenEndpoint: TEdit;
+    edRedirectionEndpoint: TEdit;
+    gbCodesTokens: TGroupBox;
     lbAuthenticationCode: TLabel;
     lbAccessToken: TLabel;
     lbRefreshToken: TLabel;
-    edAuthenticationCode: TXEdit;
-    edAccessToken: TXEdit;
-    edRefreshToken: TXEdit;
-    gbClientSettings: TXGroupBox;
+    edAuthenticationCode: TEdit;
+    edAccessToken: TEdit;
+    edRefreshToken: TEdit;
+    gbClientSettings: TGroupBox;
     lbClientID: TLabel;
     lbClientSecret: TLabel;
-    edClientID: TXEdit;
-    edClientSecret: TXEdit;
-    gbMiscSettings: TXGroupBox;
+    edClientID: TEdit;
+    edClientSecret: TEdit;
+    gbMiscSettings: TGroupBox;
     lbResponseType: TLabel;
     lbAccessScope: TLabel;
-    edAccessScope: TXEdit;
+    edAccessScope: TEdit;
     cbResponseType: TComboBox;
     pnButtons: TPanel;
     btRunAuthentication: TButton;
@@ -68,8 +65,11 @@ type
     pncaOptionsBottom: TPanel;
     btCancel: TButton;
     btApply: TButton;
-    edTokenExpiryDate: TXEdit;
+    edTokenExpiryDate: TEdit;
     lbTokenExpiryDate: TLabel;
+    btSessionUpload: TButton;
+    mmOutput: TMemo;
+    btApplyDefaults: TButton;
     procedure btCancelClick(Sender: TObject);
     procedure btRunAuthenticationClick(Sender: TObject);
     procedure btGetAccessAndRefreshTokenClick(Sender: TObject);
@@ -80,6 +80,8 @@ type
     procedure btAuthenticateRefreshTokenClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btSimpleUploadClick(Sender: TObject);
+    procedure btSessionUploadClick(Sender: TObject);
+    procedure btApplyDefaultsClick(Sender: TObject);
   private
     procedure ReloadDataFromJson;
     { Private declarations }
@@ -107,6 +109,7 @@ begin
 
   Credentials.S[access_token_key] := Trim(edAccessToken.Text);
   Credentials.S[refresh_token_key] := Trim(edRefreshToken.Text);
+
   Credentials.D[expires_in_key] := StrToDateTime(edTokenExpiryDate.Text);
 
   Credentials.SaveToFile(credentials_file, False);
@@ -114,26 +117,39 @@ begin
   cpCards.ActiveCard := caIO;
 end;
 
+procedure TFMain.btApplyDefaultsClick(Sender: TObject);
+begin
+  edAuthorizationEndpoint.Text := 'https://www.dropbox.com/oauth2/authorize';
+  edRedirectionEndpoint.Text := 'http://localhost:6569/auth';
+  edTokenEndpoint.Text := 'https://api.dropboxapi.com/oauth2/token';
+end;
+
 procedure TFMain.btAuthenticateRefreshTokenClick(Sender: TObject);
 var
-  Response: String;
+  LResponse: IResponse;
   ResponseAsJson: TJDOJsonObject;
+  LUrl: String;
 begin
-  Response := TRequest
+  LUrl := TUrlParser
+            .New
+            .BaseUrl(Trim(edTokenEndpoint.Text))
+            .ToString;
+
+  LResponse := TRequest
                 .New
-                .BaseURL(
-                  TUrlParser
-                    .New
-                    .BaseUrl(Trim(edTokenEndpoint.Text))
-                    .ToString
-                )
+                .BaseURL(LUrl)
                 .AddParam('grant_type', 'refresh_token')
                 .AddParam('refresh_token', Trim(edRefreshToken.Text))
                 .BasicAuthentication(Trim(edClientID.Text), Trim(edClientSecret.Text))
-                .Post
-                .Content;
+                .Post;
 
-  ResponseAsJson := TJDOJsonObject.Parse(Response) as TJDOJsonObject;
+  if LResponse.StatusCode <> 200 then
+  begin
+    ShowMessage(LResponse.Content);
+    Exit;
+  end;
+
+  ResponseAsJson := TJDOJsonObject.Parse(LResponse.Content) as TJDOJsonObject;
 
   try
     ShowMessage(ResponseAsJson.ToJSON(False));
@@ -147,37 +163,45 @@ end;
 
 procedure TFMain.btCancelClick(Sender: TObject);
 begin
+  ReloadDataFromJson;
   cpCards.ActiveCard := caIO;
 end;
 
 procedure TFMain.btGetAccessAndRefreshTokenClick(Sender: TObject);
 var
-  Response: String;
-  ResponseAsJson: TJDOJsonObject;
+  LResponseAsJson: TJDOJsonObject;
+  LResponse: IResponse;
+  LUrl: String;
 begin
-  Response := TRequest
+  LUrl := TUrlParser
+            .New
+            .BaseUrl(Trim(edTokenEndpoint.Text))
+            .ToString;
+
+  LResponse := TRequest
                 .New
-                .BaseURL(
-                  TUrlParser
-                    .New
-                    .BaseUrl(Trim(edTokenEndpoint.Text))
-                    .ToString)
+                .BaseURL(LUrl)
                 .AddParam('code', Trim(edAuthenticationCode.Text))
                 .AddParam('grant_type', 'authorization_code')
                 .AddParam(redirect_uri_key, Trim(edRedirectionEndpoint.Text))
                 .BasicAuthentication(edClientID.Text, edClientSecret.Text)
-                .Post
-                .Content;
+                .Post;
 
-  ResponseAsJson := TJDOJsonObject.Parse(Response) as TJDOJsonObject;
+  if LResponse.StatusCode <> 200 then
+  begin
+    ShowMessage(LResponse.Content);
+    Exit;
+  end;
+
+  LResponseAsJson := TJDOJsonObject.Parse(LResponse.Content) as TJDOJsonObject;
 
   try
-    ShowMessage(ResponseAsJson.ToJSON);
-    edAccessToken.Text := ResponseAsJson.S[access_token_key];
-    edRefreshToken.Text := ResponseAsJson.S[refresh_token_key];
-    edTokenExpiryDate.Text := DateTimeToStr(IncSecond(Now, ResponseAsJson.I[expires_in_key]));
+    ShowMessage(LResponseAsJson.ToJSON);
+    edAccessToken.Text := LResponseAsJson.S[access_token_key];
+    edRefreshToken.Text := LResponseAsJson.S[refresh_token_key];
+    edTokenExpiryDate.Text := DateTimeToStr(IncSecond(Now, LResponseAsJson.I[expires_in_key]));
   finally
-    ResponseAsJson.Free;
+    LResponseAsJson.Free;
   end;
 end;
 
@@ -187,55 +211,214 @@ begin
 end;
 
 procedure TFMain.btRunAuthenticationClick(Sender: TObject);
+var
+  LUrl: String;
 begin
-  ShellExecute(0,
-    'open',
-    PChar(
-      TUrlParser
-        .New
-        .BaseUrl(edAuthorizationEndpoint.Text)
-        .AddParameter('response_type', cbResponseType.Text)
-        .AddParameter('client_id', edClientID.Text)
-        .AddParameter('redirect_uri', edRedirectionEndpoint.Text)
-        .AddParameter('token_access_type', 'offline')
-        .ToString
-      ),
-    nil,
-    nil,
-    SW_SHOWNORMAL
-  );
+  LUrl := TUrlParser
+            .New
+            .BaseUrl(edAuthorizationEndpoint.Text)
+            .AddParameter('response_type', cbResponseType.Text)
+            .AddParameter('client_id', edClientID.Text)
+            .AddParameter('redirect_uri', edRedirectionEndpoint.Text)
+            .AddParameter('token_access_type', 'offline')
+            .ToString;
+
+  ShellExecute(0, 'open', PChar(LUrl), nil, nil, SW_SHOWNORMAL);
 
   THorse.Listen(6569);
 end;
 
+procedure TFMain.btSessionUploadClick(Sender: TObject);
+var
+  LUrl, LFile, LSessionID: String;
+  LResponseAsJson, LDropboxApiArgs: TJDOJsonObject;
+  LFileToUpload: TFileStream;
+  LChunkOfFile: TMemoryStream;
+  LResponse: IResponse;
+  LDialog: TFileOpenDialog;
+  LFileSize: Int64;
+
+const
+  LMaximumSize: Int64 = 157286400;
+
+begin
+  LUrl := TUrlParser
+            .New
+            .BaseUrl('https://content.dropboxapi.com/2/files/upload_session/start')
+            .ToString;
+
+  LDialog := TFileOpenDialog.Create(FMain);
+  try
+    if LDialog.Execute then
+      LFile := LDialog.FileName;
+  finally
+    LDialog.Free;
+  end;
+
+  LFileToUpload := TFileStream.Create(LFile, fmOpenReadWrite);
+
+  LDropboxApiArgs := TJDOJsonObject.Create;
+  try
+    LDropboxApiArgs.B['close'] := false;
+
+    LFileSize := LFileToUpload.Size;
+
+    LResponse := TRequest
+                  .New
+                  .BaseURL(LUrl)
+                  .Token('Bearer '+Trim(edAccessToken.Text))
+                  .AddHeader('Dropbox-API-Arg', LDropboxApiArgs.ToJSON, [poDoNotEncode])
+                  .ContentType('application/octet-stream')
+                  .Post;
+
+    if LResponse.StatusCode <> 200 then
+    begin
+      mmOutput.Lines.Add('Session start response code: ' + IntToStr(LResponse.StatusCode));
+      mmOutput.Lines.Add('Session response: ' + LResponse.Content);
+
+      ShowMessage(LResponse.Content);
+      Abort;
+    end;
+
+    mmOutput.Lines.Add('Session start response code: ' + IntToStr(LResponse.StatusCode));
+    mmOutput.Lines.Add('Session response: ' + LResponse.Content);
+
+    LResponseAsJson := TJDOJsonObject.Parse(LResponse.Content) as TJDOJsonObject;
+    try
+      LSessionID := LResponseAsJson.S['session_id'];
+    finally;
+      LResponseAsJson.Free;
+    end;
+
+    LDropboxApiArgs.Clear;
+
+    LDropboxApiArgs.O['cursor'].S['session_id'] := LSessionID;
+    LDropboxApiArgs.O['cursor'].I['offset'] := 0;
+    LDropboxApiArgs.B['close'] := false;
+
+    while LFileToUpload.Position < LFileSize do
+    begin
+      LChunkOfFile := TMemoryStream.Create;
+
+      if ((LFileSize - LFileToUpload.Position) >= LMaximumSize) then
+      begin
+        LChunkOfFile.CopyFrom(LFileToUpload, LMaximumSize);
+
+        LUrl := TUrlParser
+          .New
+          .BaseUrl('https://content.dropboxapi.com/2/files/upload_session/append_v2')
+          .ToString;
+
+        mmOutput.Lines.Add('Session append size: ' + IntToStr(LChunkOfFile.Size));
+      end
+      else
+      begin
+        LChunkOfFile.CopyFrom(LFileToUpload, (LFileSize - LFileToUpload.Position));
+
+        LDropboxApiArgs.Remove('close');
+        LDropboxApiArgs.O['commit'].S['path'] := '/'+ExtractFileName(LFile);
+        LDropboxApiArgs.O['commit'].S['mode'] := 'add';
+        LDropboxApiArgs.O['commit'].B['autorename'] := true;
+        LDropboxApiArgs.O['commit'].B['mute'] := false;
+        LDropboxApiArgs.O['commit'].B['strict_conflict'] := false;
+
+        LUrl := TUrlParser
+          .New
+          .BaseUrl('https://content.dropboxapi.com/2/files/upload_session/finish')
+          .ToString;
+
+        mmOutput.Lines.Add('Session finish size: ' + IntToStr(LChunkOfFile.Size));
+      end;
+
+      mmOutput.Lines.Add('Session sending...');
+
+      LResponse := TRequest
+                    .New
+                    .BaseURL(LUrl)
+                    .Token('Bearer '+Trim(edAccessToken.Text))
+                    .AddHeader('Dropbox-API-Arg', LDropboxApiArgs.ToJSON, [poDoNotEncode])
+                    .ContentType('application/octet-stream')
+                    .AddBody(LChunkOfFile)
+                    .Post;
+
+      if LResponse.StatusCode <> 200 then
+      begin
+        mmOutput.Lines.Add('upload response code: ' + IntToStr(LResponse.StatusCode));
+        mmOutput.Lines.Add('upload response: ' + LResponse.Content);
+
+        ShowMessage(LResponse.Content);
+        Abort;
+      end;
+
+      mmOutput.Lines.Add('Session response code: ' + IntToStr(LResponse.StatusCode));
+      mmOutput.Lines.Add('Session response: ' + LResponse.Content);
+
+      LDropboxApiArgs.O['cursor'].I['offset'] := LFileToUpload.Position;
+    end;
+
+    LResponseAsJson := TJDOJsonObject.Parse(LResponse.Content) as TJDOJsonObject;
+
+    try
+      ShowMessage(LResponseAsJson.ToJSON(False));
+    finally
+      LResponseAsJson.Free;
+    end;
+  finally
+    LDropboxApiArgs.Free;
+    LFileToUpload.Free;
+  end;
+end;
+
 procedure TFMain.btSimpleUploadClick(Sender: TObject);
 var
-  LUrl: String;
-  LResponseAsJson: TJDOJsonObject;
+  LUrl, LFile: String;
+  LResponseAsJson, LDropboxApiArgs: TJDOJsonObject;
   LFileToUpload: TFileStream;
   LResponse: IResponse;
+  LDialog: TFileOpenDialog;
 begin
   LUrl := TUrlParser
             .New
             .BaseUrl('https://content.dropboxapi.com/2/files/upload')
             .ToString;
 
-  LFileToUpload := TFileStream.Create('teste.txt', fmOpenReadWrite);
+  LDialog := TFileOpenDialog.Create(FMain);
+  try
+    if LDialog.Execute then
+      LFile := LDialog.FileName;
+  finally
+    LDialog.Free;
+  end;
 
-  LResponse := TRequest
-                .New
-                .BaseURL(LUrl)
-                .Token('Bearer '+Trim(edAccessToken.Text))
-                .AddHeader('Dropbox-API-Arg', '{"path": "/teste.txt"}', [poDoNotEncode])
-                .ContentType('application/octet-stream')
-                .AddBody(LFileToUpload)
-                .Post;
+  LDropboxApiArgs := TJDOJsonObject.Create;
+  try
+    LDropboxApiArgs.S['path'] := '/'+ExtractFileName(LFile);
+
+    LFileToUpload := TFileStream.Create(LFile, fmOpenReadWrite);
+
+    LResponse := TRequest
+                  .New
+                  .BaseURL(LUrl)
+                  .Token('Bearer '+Trim(edAccessToken.Text))
+                  .AddHeader('Dropbox-API-Arg', LDropboxApiArgs.ToJSON, [poDoNotEncode])
+                  .ContentType('application/octet-stream')
+                  .AddBody(LFileToUpload)
+                  .Post;
+  finally
+    LDropboxApiArgs.Free;
+  end;
 
   if LResponse.StatusCode <> 200 then
   begin
+    mmOutput.Lines.Add('upload response code: ' + IntToStr(LResponse.StatusCode));
+    mmOutput.Lines.Add('upload response: ' + LResponse.Content);
+
     ShowMessage(LResponse.Content);
     Exit;
   end;
+
+  mmOutput.Lines.Add('upload response code: ' + IntToStr(LResponse.StatusCode));
+  mmOutput.Lines.Add('upload response: ' + LResponse.Content);
 
   LResponseAsJson := TJDOJsonObject.Parse(LResponse.Content) as TJDOJsonObject;
   try
@@ -291,6 +474,8 @@ begin
   edAccessToken.Text := Credentials.S[access_token_key];
   edRefreshToken.Text := Credentials.S[refresh_token_key];
   edTokenExpiryDate.Text := DateTimeToStr(Credentials.D[expires_in_key]);
+
+  cpCards.ActiveCard := caIO;
 end;
 
 end.

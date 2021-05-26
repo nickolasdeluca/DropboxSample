@@ -5,8 +5,6 @@ interface
 const
   credentials_file = 'credentials.json';
 
-  custom_redirect_uri = 'http://localhost:6569/auth';
-
   auth_uri_key = 'auth_uri';
   token_uri_key = 'token_uri';
   redirect_uri_key = 'redirect_uri';

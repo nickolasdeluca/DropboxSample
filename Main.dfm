@@ -1,14 +1,14 @@
 object FMain: TFMain
   Left = 0
   Top = 0
-  Caption = 'FMain'
+  Caption = 'DropboxSample with RESTRequests'
   ClientHeight = 461
   ClientWidth = 699
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'Tahoma'
+  Font.Name = 'Segoe UI'
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
@@ -22,7 +22,7 @@ object FMain: TFMain
     Width = 699
     Height = 461
     Align = alClient
-    ActiveCard = caIO
+    ActiveCard = caOptions
     Caption = 'cpCards'
     TabOrder = 0
     object caIO: TCard
@@ -63,22 +63,49 @@ object FMain: TFMain
         Caption = 'pncaIOBackground'
         ShowCaption = False
         TabOrder = 0
-        object gbEnvio: TXGroupBox
+        object gbEnvio: TGroupBox
           Left = 8
           Top = 8
           Width = 265
-          Height = 137
-          Caption = 'Upload / Download'
+          Height = 89
+          Caption = 'Upload'
           TabOrder = 0
           object btSimpleUpload: TButton
-            Left = 9
-            Top = 16
-            Width = 104
+            AlignWithMargins = True
+            Left = 5
+            Top = 18
+            Width = 255
             Height = 25
-            Caption = 'Upload simples'
+            Align = alTop
+            Caption = 'Upload arquivo < 150MB'
             TabOrder = 0
             OnClick = btSimpleUploadClick
           end
+          object btSessionUpload: TButton
+            AlignWithMargins = True
+            Left = 5
+            Top = 49
+            Width = 255
+            Height = 25
+            Align = alTop
+            Caption = 'Upload arquivo > 150MB'
+            TabOrder = 1
+            OnClick = btSessionUploadClick
+          end
+        end
+        object mmOutput: TMemo
+          AlignWithMargins = True
+          Left = 5
+          Top = 227
+          Width = 687
+          Height = 173
+          Margins.Left = 5
+          Margins.Right = 5
+          Margins.Bottom = 10
+          Align = alBottom
+          ReadOnly = True
+          ScrollBars = ssVertical
+          TabOrder = 1
         end
       end
       object pnBottom: TPanel
@@ -153,7 +180,7 @@ object FMain: TFMain
         Caption = 'pncaOptionsBackground'
         ShowCaption = False
         TabOrder = 0
-        object gbEndpoints: TXGroupBox
+        object gbEndpoints: TGroupBox
           Left = 8
           Top = 5
           Width = 369
@@ -164,7 +191,7 @@ object FMain: TFMain
             AlignWithMargins = True
             Left = 13
             Top = 25
-            Width = 114
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -172,12 +199,13 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Authorization-Endpoint:'
+            ExplicitWidth = 126
           end
           object lbTokenEndpoint: TLabel
             AlignWithMargins = True
             Left = 13
             Top = 117
-            Width = 79
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -185,12 +213,13 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Token-Endpoint:'
+            ExplicitWidth = 86
           end
           object lbRedirectionEndpoint: TLabel
             AlignWithMargins = True
             Left = 13
             Top = 71
-            Width = 100
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -198,8 +227,9 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Redirection-Endpoint'
+            ExplicitWidth = 111
           end
-          object edAuthorizationEndpoint: TXEdit
+          object edAuthorizationEndpoint: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 40
@@ -211,8 +241,9 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             TabOrder = 0
+            ExplicitWidth = 309
           end
-          object edTokenEndpoint: TXEdit
+          object edTokenEndpoint: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 132
@@ -225,7 +256,7 @@ object FMain: TFMain
             Align = alTop
             TabOrder = 1
           end
-          object edRedirectionEndpoint: TXEdit
+          object edRedirectionEndpoint: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 86
@@ -236,10 +267,12 @@ object FMain: TFMain
             Margins.Right = 10
             Margins.Bottom = 0
             Align = alTop
+            ReadOnly = True
             TabOrder = 2
+            Text = 'http://localhost:6569/auth'
           end
         end
-        object gbCodesTokens: TXGroupBox
+        object gbCodesTokens: TGroupBox
           Left = 7
           Top = 179
           Width = 369
@@ -250,7 +283,7 @@ object FMain: TFMain
             AlignWithMargins = True
             Left = 13
             Top = 25
-            Width = 103
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -258,12 +291,13 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Authentication-Code:'
+            ExplicitWidth = 111
           end
           object lbAccessToken: TLabel
             AlignWithMargins = True
             Left = 13
             Top = 71
-            Width = 70
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -271,12 +305,13 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Access-Token:'
+            ExplicitWidth = 71
           end
           object lbRefreshToken: TLabel
             AlignWithMargins = True
             Left = 13
             Top = 117
-            Width = 75
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -284,12 +319,13 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Refresh-Token:'
+            ExplicitWidth = 77
           end
           object lbTokenExpiryDate: TLabel
             AlignWithMargins = True
             Left = 13
             Top = 163
-            Width = 93
+            Width = 343
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -297,8 +333,9 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Token-Expiry Date:'
+            ExplicitWidth = 95
           end
-          object edAuthenticationCode: TXEdit
+          object edAuthenticationCode: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 40
@@ -311,7 +348,7 @@ object FMain: TFMain
             Align = alTop
             TabOrder = 0
           end
-          object edAccessToken: TXEdit
+          object edAccessToken: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 86
@@ -324,7 +361,7 @@ object FMain: TFMain
             Align = alTop
             TabOrder = 1
           end
-          object edRefreshToken: TXEdit
+          object edRefreshToken: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 132
@@ -337,7 +374,7 @@ object FMain: TFMain
             Align = alTop
             TabOrder = 2
           end
-          object edTokenExpiryDate: TXEdit
+          object edTokenExpiryDate: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 178
@@ -352,7 +389,7 @@ object FMain: TFMain
             TabOrder = 3
           end
         end
-        object gbClientSettings: TXGroupBox
+        object gbClientSettings: TGroupBox
           Left = 391
           Top = 5
           Width = 296
@@ -363,7 +400,7 @@ object FMain: TFMain
             AlignWithMargins = True
             Left = 13
             Top = 25
-            Width = 46
+            Width = 270
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -371,12 +408,13 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Client-ID:'
+            ExplicitWidth = 48
           end
           object lbClientSecret: TLabel
             AlignWithMargins = True
             Left = 13
             Top = 71
-            Width = 66
+            Width = 270
             Height = 13
             Margins.Left = 11
             Margins.Top = 10
@@ -384,8 +422,9 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Client-Secret:'
+            ExplicitWidth = 68
           end
-          object edClientID: TXEdit
+          object edClientID: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 40
@@ -398,7 +437,7 @@ object FMain: TFMain
             Align = alTop
             TabOrder = 0
           end
-          object edClientSecret: TXEdit
+          object edClientSecret: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 86
@@ -412,7 +451,7 @@ object FMain: TFMain
             TabOrder = 1
           end
         end
-        object gbMiscSettings: TXGroupBox
+        object gbMiscSettings: TGroupBox
           Left = 391
           Top = 135
           Width = 296
@@ -431,7 +470,7 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Response-Type:'
-            ExplicitWidth = 79
+            ExplicitWidth = 80
           end
           object lbAccessScope: TLabel
             AlignWithMargins = True
@@ -445,9 +484,9 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Caption = 'Access-Scope:'
-            ExplicitWidth = 70
+            ExplicitWidth = 71
           end
-          object edAccessScope: TXEdit
+          object edAccessScope: TEdit
             AlignWithMargins = True
             Left = 12
             Top = 86
@@ -458,6 +497,7 @@ object FMain: TFMain
             Margins.Right = 10
             Margins.Bottom = 0
             Align = alTop
+            Enabled = False
             TabOrder = 0
           end
           object cbResponseType: TComboBox
@@ -472,6 +512,7 @@ object FMain: TFMain
             Margins.Bottom = 0
             Align = alTop
             Style = csDropDownList
+            Enabled = False
             ItemIndex = 0
             TabOrder = 1
             Text = 'code'
@@ -492,7 +533,7 @@ object FMain: TFMain
           object btRunAuthentication: TButton
             AlignWithMargins = True
             Left = 20
-            Top = 5
+            Top = 36
             Width = 256
             Height = 26
             Margins.Left = 20
@@ -503,11 +544,12 @@ object FMain: TFMain
             Caption = 'Start Authentication'
             TabOrder = 0
             OnClick = btRunAuthenticationClick
+            ExplicitTop = 5
           end
           object btAuthenticateRefreshToken: TButton
             AlignWithMargins = True
             Left = 20
-            Top = 67
+            Top = 98
             Width = 256
             Height = 26
             Margins.Left = 20
@@ -518,11 +560,12 @@ object FMain: TFMain
             Caption = 'Refresh authentication using the Refresh Token'
             TabOrder = 1
             OnClick = btAuthenticateRefreshTokenClick
+            ExplicitTop = 67
           end
           object btGetAccessAndRefreshToken: TButton
             AlignWithMargins = True
             Left = 20
-            Top = 36
+            Top = 67
             Width = 256
             Height = 26
             Margins.Left = 20
@@ -533,6 +576,24 @@ object FMain: TFMain
             Caption = 'Get access token and refresh token'
             TabOrder = 2
             OnClick = btGetAccessAndRefreshTokenClick
+            ExplicitTop = 36
+          end
+          object btApplyDefaults: TButton
+            AlignWithMargins = True
+            Left = 20
+            Top = 5
+            Width = 256
+            Height = 26
+            Hint = 'Aplica valores utilizados por padr'#227'o pela sample'
+            Margins.Left = 20
+            Margins.Top = 5
+            Margins.Right = 20
+            Margins.Bottom = 0
+            Align = alTop
+            Caption = 'Apply default values'
+            TabOrder = 3
+            OnClick = btApplyDefaultsClick
+            ExplicitTop = 2
           end
         end
       end
