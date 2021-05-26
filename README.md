@@ -8,3 +8,5 @@
  [Horse](github.com/hashload/horse)  
  [UrlParser](github.com/nickolasdeluca/urlparser)  
  [RESTRequest4Delphi](github.com/viniciussanchez/restrequest4delphi)  
+
+Recomendo a instalação das dependencias utilizando o [BOSS](https://github.com/HashLoad/boss).
